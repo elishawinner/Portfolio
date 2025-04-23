@@ -23,16 +23,21 @@ jobs:
     - name: Build project
       run: npm run build
 
+    - name: Configure SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
+
     - name: Deploy to cPanel
       uses: easingthemes/ssh-deploy@v4.0.0
-      env:
-        SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        SSH_KEY_NAME: deploy_key  # Explicitly set key name
       with:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
         REMOTE_USER: ${{ secrets.REMOTE_USER }}
         REMOTE_PORT: ${{ secrets.REMOTE_PORT || '22' }}
         SOURCE: "build/"
         TARGET: ${{ secrets.REMOTE_PATH }}
-        ssh-options: -o StrictHostKeyChecking=no -o IdentitiesOnly=yes  # Critical fix
+        ssh-options: -o StrictHostKeyChecking=no -o IdentitiesOnly=yes
         rsync-options: -rlgoDzvc --delete
