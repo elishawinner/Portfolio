@@ -1,4 +1,4 @@
-name: 🔄 cPanel Deployment Pipeline
+name: 🚀 cPanel Deployment
 
 on:
   push:
@@ -13,40 +13,21 @@ jobs:
     - name: 🔍 Checkout Code
       uses: actions/checkout@v4
 
-    - name: ⎔ Set Up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-
-    - name: 📦 Install Dependencies
-      run: npm ci --omit=dev
-
-    - name: 🏗️ Build Project
-      run: npm run build
-
-    - name: 🔐 SSH Setup
+    - name: 🔐 SSH Key Setup
       run: |
         mkdir -p ~/.ssh
-        # Format key with proper newlines
-        echo "${{ secrets.CPANEL_SSH_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/cpanel_deploy
+        # Decode base64 encoded key
+        echo "${{ secrets.CPANEL_SSH_KEY }}" | base64 -d > ~/.ssh/cpanel_deploy
         chmod 600 ~/.ssh/cpanel_deploy
         
-        # Validate key format
+        # Validate key structure
+        echo "Key header: $(head -1 ~/.ssh/cpanel_deploy)"
+        echo "Key footer: $(tail -1 ~/.ssh/cpanel_deploy)"
+        
         if ! ssh-keygen -l -f ~/.ssh/cpanel_deploy; then
-          echo "::error::Invalid SSH key format!"
+          echo "::error::Invalid key format - regenerate with 'ssh-keygen -t rsa -m PEM'"
           exit 1
         fi
-
-    - name: 🔗 Connection Test
-      run: |
-        ssh -T \
-          -o StrictHostKeyChecking=no \
-          -o IdentitiesOnly=yes \
-          -i ~/.ssh/cpanel_deploy \
-          -p ${{ secrets.CPANEL_PORT || '22' }} \
-          ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }} \
-          exit 0
 
     - name: 🚀 Deployment
       uses: easingthemes/ssh-deploy@v4.0.0
@@ -57,9 +38,5 @@ jobs:
         REMOTE_PORT: ${{ secrets.CPANEL_PORT || '22' }}
         SOURCE: 'build/'
         TARGET: ${{ secrets.CPANEL_DEPLOY_PATH }}
-        ARGS: '-rlgoDzvc --delete --checksum'
-        SSH_CMD_ARGS: '-o ConnectTimeout=15 -i ~/.ssh/cpanel_deploy -o IdentitiesOnly=yes'
-
-    - name: 🧼 Cleanup
-      if: always()
-      run: rm -f ~/.ssh/cpanel_deploy
+        ARGS: '-rlgoDzvc --delete'
+        SSH_CMD_ARGS: '-o IdentitiesOnly=yes -i ~/.ssh/cpanel_deploy'
