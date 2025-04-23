@@ -23,39 +23,44 @@ jobs:
     - name: Build project
       run: npm run build
 
-    - name: Configure SSH
+    - name: Configure SSH System
       run: |
         mkdir -p ~/.ssh
-        # Write key with strict formatting
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/deploy_key
-        chmod 600 ~/.ssh/deploy_key
+        chmod 700 ~/.ssh
         
-        # Verify key format
-        if ! ssh-keygen -l -f ~/.ssh/deploy_key; then
-          echo "Invalid SSH key format!"
-          exit 1
-        fi
+        # Decode base64 encoded SSH key to preserve formatting
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
 
-        # Force specific key usage
-        echo "Host cpanel-deploy" >> ~/.ssh/config
-        echo "  HostName ${{ secrets.REMOTE_HOST }}" >> ~/.ssh/config
-        echo "  User ${{ secrets.REMOTE_USER }}" >> ~/.ssh/config
-        echo "  Port ${REMOTE_PORT:-22}" >> ~/.ssh/config
-        echo "  IdentityFile ~/.ssh/deploy_key" >> ~/.ssh/config
-        echo "  IdentitiesOnly yes" >> ~/.ssh/config
-        echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+        # Verify key type
+        echo "Key type:"
+        ssh-keygen -l -f ~/.ssh/deploy_key
+
+        # Configure SSH client
+        cat << EOF > ~/.ssh/config
+        Host cpanel-deploy
+          HostName ${{ secrets.REMOTE_HOST }}
+          User ${{ secrets.REMOTE_USER }}
+          Port ${REMOTE_PORT:-22}
+          IdentityFile ~/.ssh/deploy_key
+          IdentitiesOnly yes
+          StrictHostKeyChecking yes
+          UserKnownHostsFile ~/.ssh/known_hosts
+        EOF
+
+        # Get server fingerprint
+        ssh-keyscan -p ${REMOTE_PORT:-22} -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
 
     - name: Test SSH Connection
-      run: ssh -T cpanel-deploy echo "SSH connection successful!"
+      run: |
+        echo "Attempting SSH connection..."
+        ssh -vT cpanel-deploy exit 0
 
-    - name: Deploy to cPanel
+    - name: Force Deploy
       uses: easingthemes/ssh-deploy@v4.0.0
-      env:
-        SSH_KEY_PATH: ~/.ssh/deploy_key
       with:
-        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-        REMOTE_USER: ${{ secrets.REMOTE_USER }}
-        REMOTE_PORT: ${{ secrets.REMOTE_PORT || '22' }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        REMOTE_HOST: cpanel-deploy  # Use configured host alias
         SOURCE: "build/"
         TARGET: ${{ secrets.REMOTE_PATH }}
         ssh-options: -F ~/.ssh/config
