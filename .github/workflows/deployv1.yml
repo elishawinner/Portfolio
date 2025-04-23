@@ -1,4 +1,4 @@
-name: Eli Deploy to cPanel
+name: Eli  Deploy to cPanel
 
 on:
   push:
@@ -25,14 +25,10 @@ jobs:
 
     - name: Deploy to cPanel
       uses: easingthemes/ssh-deploy@v4.0.0
-      env:
-        SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        SSH_KEY_NAME: deploy_key  # Explicitly set key name
       with:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
         REMOTE_USER: ${{ secrets.REMOTE_USER }}
         REMOTE_PORT: ${{ secrets.REMOTE_PORT || '22' }}
         SOURCE: "build/"
         TARGET: ${{ secrets.REMOTE_PATH }}
-        ssh-options: -o StrictHostKeyChecking=no -o IdentitiesOnly=yes  # Critical fix
-        rsync-options: -rlgoDzvc --delete
