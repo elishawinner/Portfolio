@@ -1,42 +1,35 @@
-name: 🚀 cPanel Deployment
+name: Eli  Deploy to cPanel
 
 on:
   push:
     branches: [main]
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-    - name: 🔍 Checkout Code
+    - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: 🔐 SSH Key Setup
-      run: |
-        mkdir -p ~/.ssh
-        # Decode base64 encoded key
-        echo "${{ secrets.CPANEL_SSH_KEY }}" | base64 -d > ~/.ssh/cpanel_deploy
-        chmod 600 ~/.ssh/cpanel_deploy
-        
-        # Validate key structure
-        echo "Key header: $(head -1 ~/.ssh/cpanel_deploy)"
-        echo "Key footer: $(tail -1 ~/.ssh/cpanel_deploy)"
-        
-        if ! ssh-keygen -l -f ~/.ssh/cpanel_deploy; then
-          echo "::error::Invalid key format - regenerate with 'ssh-keygen -t rsa -m PEM'"
-          exit 1
-        fi
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
 
-    - name: 🚀 Deployment
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build project
+      run: npm run build
+
+    - name: Deploy to cPanel
       uses: easingthemes/ssh-deploy@v4.0.0
       with:
-        SSH_PRIVATE_KEY: ${{ secrets.CPANEL_SSH_KEY }}
-        REMOTE_HOST: ${{ secrets.CPANEL_HOST }}
-        REMOTE_USER: ${{ secrets.CPANEL_USER }}
-        REMOTE_PORT: ${{ secrets.CPANEL_PORT || '22' }}
-        SOURCE: 'build/'
-        TARGET: ${{ secrets.CPANEL_DEPLOY_PATH }}
-        ARGS: '-rlgoDzvc --delete'
-        SSH_CMD_ARGS: '-o IdentitiesOnly=yes -i ~/.ssh/cpanel_deploy'
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+        REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        REMOTE_PORT: ${{ secrets.REMOTE_PORT || '22' }}
+        SOURCE: "build/"
+        TARGET: ${{ secrets.REMOTE_PATH }}
