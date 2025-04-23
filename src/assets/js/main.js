@@ -1,87 +1,63 @@
-/**
-* Template Name: iPortfolio - v3.3.0
-* Template URL: https://bootstrapmade.com/iportfolio-bootstrap-portfolio-websites-template/
-* Author: BootstrapMade.com
-* License: https://bootstrapmade.com/license/
-*/
-(function() {
-  "use strict";
+/* global Typed, Waypoint, Isotope, Swiper, AOS */
 
+(function () {
   /**
    * Easy selector helper function
    */
   const select = (el, all = false) => {
     el = el.trim()
-    if (all) {
-      return [...document.querySelectorAll(el)]
-    } else {
-      return document.querySelector(el)
-    }
+    return all ? [...document.querySelectorAll(el)] : document.querySelector(el)
   }
 
   /**
    * Easy event listener function
    */
   const on = (type, el, listener, all = false) => {
-    let selectEl = select(el, all)
-    if (selectEl) {
-      if (all) {
-        selectEl.forEach(e => e.addEventListener(type, listener))
-      } else {
-        selectEl.addEventListener(type, listener)
-      }
-    }
+    const selectEl = select(el, all)
+    if (!selectEl) return
+    all ? selectEl.forEach(e => e.addEventListener(type, listener)) : selectEl.addEventListener(type, listener)
   }
 
   /**
-   * Easy on scroll event listener 
+   * Scroll event listener
    */
-  const onscroll = (el, listener) => {
-    el.addEventListener('scroll', listener)
-  }
+  const onscroll = (el, listener) => el.addEventListener('scroll', listener)
 
   /**
    * Navbar links active state on scroll
    */
-  let navbarlinks = select('#navbar .scrollto', true)
+  const navbarlinks = select('#navbar .scrollto', true)
   const navbarlinksActive = () => {
-    let position = window.scrollY + 200
+    const position = window.scrollY + 200
     navbarlinks.forEach(navbarlink => {
       if (!navbarlink.hash) return
-      let section = select(navbarlink.hash)
+      const section = select(navbarlink.hash)
       if (!section) return
-      if (position >= section.offsetTop && position <= (section.offsetTop + section.offsetHeight)) {
-        navbarlink.classList.add('active')
-      } else {
-        navbarlink.classList.remove('active')
-      }
+      navbarlink.classList.toggle(
+        'active',
+        position >= section.offsetTop && position <= (section.offsetTop + section.offsetHeight)
+      )
     })
   }
+
   window.addEventListener('load', navbarlinksActive)
   onscroll(document, navbarlinksActive)
 
   /**
-   * Scrolls to an element with header offset
+   * Scroll to element with header offset
    */
   const scrollto = (el) => {
-    let elementPos = select(el).offsetTop
-    window.scrollTo({
-      top: elementPos,
-      behavior: 'smooth'
-    })
+    const elementPos = select(el).offsetTop
+    window.scrollTo({ top: elementPos, behavior: 'smooth' })
   }
 
   /**
    * Back to top button
    */
-  let backtotop = select('.back-to-top')
+  const backtotop = select('.back-to-top')
   if (backtotop) {
     const toggleBacktotop = () => {
-      if (window.scrollY > 100) {
-        backtotop.classList.add('active')
-      } else {
-        backtotop.classList.remove('active')
-      }
+      backtotop.classList.toggle('active', window.scrollY > 100)
     }
     window.addEventListener('load', toggleBacktotop)
     onscroll(document, toggleBacktotop)
@@ -90,23 +66,23 @@
   /**
    * Mobile nav toggle
    */
-  on('click', '.mobile-nav-toggle', function(e) {
-    select('body').classList.toggle('mobile-nav-active')
+  on('click', '.mobile-nav-toggle', function () {
+    const body = select('body')
+    body.classList.toggle('mobile-nav-active')
     this.classList.toggle('bi-list')
     this.classList.toggle('bi-x')
   })
 
   /**
-   * Scrool with ofset on links with a class name .scrollto
+   * Smooth scroll for links with .scrollto
    */
-  on('click', '.scrollto', function(e) {
+  on('click', '.scrollto', function (e) {
     if (select(this.hash)) {
       e.preventDefault()
-
-      let body = select('body')
+      const body = select('body')
       if (body.classList.contains('mobile-nav-active')) {
         body.classList.remove('mobile-nav-active')
-        let navbarToggle = select('.mobile-nav-toggle')
+        const navbarToggle = select('.mobile-nav-toggle')
         navbarToggle.classList.toggle('bi-list')
         navbarToggle.classList.toggle('bi-x')
       }
@@ -115,95 +91,74 @@
   }, true)
 
   /**
-   * Scroll with ofset on page load with hash links in the url
+   * Scroll to hash on load
    */
   window.addEventListener('load', () => {
-    if (window.location.hash) {
-      if (select(window.location.hash)) {
-        scrollto(window.location.hash)
-      }
+    if (window.location.hash && select(window.location.hash)) {
+      scrollto(window.location.hash)
     }
-  });
+  })
 
   /**
-   * Hero type effect
+   * Hero typed effect
    */
   const typed = select('.typed')
   if (typed) {
-    let typed_strings = typed.getAttribute('data-typed-items')
-    typed_strings = typed_strings.split(',')
-    // eslint-disable-next-line no-undef
+    let typed_strings = typed.getAttribute('data-typed-items').split(',')
     new Typed('.typed', {
       strings: typed_strings,
       loop: true,
       typeSpeed: 100,
       backSpeed: 50,
       backDelay: 2000
-    });
+    })
   }
 
   /**
    * Skills animation
    */
-  let skilsContent = select('.skills-content');
+  const skilsContent = select('.skills-content')
   if (skilsContent) {
-    // eslint-disable-next-line no-undef
     new Waypoint({
       element: skilsContent,
       offset: '80%',
-      handler: function(direction) {
-        let progress = select('.progress .progress-bar', true);
-        progress.forEach((el) => {
+      handler: () => {
+        const progress = select('.progress .progress-bar', true)
+        progress.forEach(el => {
           el.style.width = el.getAttribute('aria-valuenow') + '%'
-        });
+        })
       }
     })
   }
 
   /**
-   * Porfolio isotope and filter
+   * Portfolio isotope and filter
    */
   window.addEventListener('load', () => {
-    let portfolioContainer = select('.portfolio-container');
+    const portfolioContainer = select('.portfolio-container')
     if (portfolioContainer) {
-      // eslint-disable-next-line no-undef
-      let portfolioIsotope = new Isotope(portfolioContainer, {
-        itemSelector: '.portfolio-item'
-      });
+      const portfolioIsotope = new Isotope(portfolioContainer, { itemSelector: '.portfolio-item' })
+      const portfolioFilters = select('#portfolio-flters li', true)
 
-      let portfolioFilters = select('#portfolio-flters li', true);
+      on('click', '#portfolio-flters li', function (e) {
+        e.preventDefault()
+        portfolioFilters.forEach(el => el.classList.remove('filter-active'))
+        this.classList.add('filter-active')
 
-      on('click', '#portfolio-flters li', function(e) {
-        e.preventDefault();
-        portfolioFilters.forEach(function(el) {
-          el.classList.remove('filter-active');
-        });
-        this.classList.add('filter-active');
-
-        portfolioIsotope.arrange({
-          filter: this.getAttribute('data-filter')
-        });
-        portfolioIsotope.on('arrangeComplete', function() {
-          // eslint-disable-next-line no-undef
-          AOS.refresh()
-        });
-      }, true);
+        portfolioIsotope.arrange({ filter: this.getAttribute('data-filter') })
+        portfolioIsotope.on('arrangeComplete', () => AOS.refresh())
+      }, true)
     }
-
-  });
+  })
 
   /**
-   * Initiate portfolio lightbox 
+   * Init portfolio lightbox (no need to assign it)
    */
-  // eslint-disable-next-line no-undef
-  const portfolioLightbox = GLightbox({
-    selector: '.portfolio-lightbox'
-  });
+  GLightbox({ selector: '.portfolio-lightbox' })
 
   /**
    * Portfolio details slider
    */
-  // eslint-disable-next-line no-undef
   new Swiper('.portfolio-details-slider', {
     speed: 400,
     loop: true,
@@ -216,12 +171,11 @@
       type: 'bullets',
       clickable: true
     }
-  });
+  })
 
   /**
    * Testimonials slider
    */
-  // eslint-disable-next-line no-undef
   new Swiper('.testimonials-slider', {
     speed: 600,
     loop: true,
@@ -240,25 +194,22 @@
         slidesPerView: 1,
         spaceBetween: 20
       },
-
       1200: {
         slidesPerView: 3,
         spaceBetween: 20
       }
     }
-  });
+  })
 
   /**
    * Animation on scroll
    */
   window.addEventListener('load', () => {
-    // eslint-disable-next-line no-undef
     AOS.init({
       duration: 1000,
       easing: 'ease-in-out',
       once: true,
       mirror: false
     })
-  });
-
+  })
 })()
