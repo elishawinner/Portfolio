@@ -4,8 +4,8 @@
 * Author: BootstrapMade.com
 * License: https://bootstrapmade.com/license/
 */
+
 (function() {
-  "use strict";
 
   /**
    * Easy selector helper function
@@ -196,7 +196,7 @@
    * Initiate portfolio lightbox 
    */
   // eslint-disable-next-line no-undef
-  const portfolioLightbox = GLightbox({
+  GLightbox({
     selector: '.portfolio-lightbox'
   });
 
@@ -261,4 +261,4 @@
     })
   });
 
-})()
+})();
