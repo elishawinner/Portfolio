@@ -154,6 +154,7 @@
   /**
    * Init portfolio lightbox (no need to assign it)
    */
+  // eslint-disable-next-line no-undef
   GLightbox({ selector: '.portfolio-lightbox' })
 
   /**
