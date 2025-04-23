@@ -1,71 +1,65 @@
-name: 🚀 Eli - Automated cPanel Deployment
+name: 🔄 cPanel Deployment Pipeline
 
 on:
-  workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - 'src/**'
-      - 'package.json'
-      # - 'vite.config.js'
-
-env:
-  DEPLOY_ENV: production
-  NODE_ENV: production
 
 jobs:
   deploy:
-    name: 🛠️ Build & Deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
 
     steps:
-      - name: 🔍 Checkout Codebase
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: false
+    - name: 🔍 Checkout Code
+      uses: actions/checkout@v4
 
-      - name: ⎔ Node.js Environment
-        uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
-          cache: 'npm'
+    - name: ⎔ Set Up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
 
-      - name: 📦 Dependency Management
-        run: |
-          npm ci --prefer-offline --audit=false
-          npm cache clean --force
+    - name: 📦 Install Dependencies
+      run: npm ci --omit=dev
 
-      - name: 🏗️ Build Production Bundle
-        run: |
-          npm run build -- --mode $DEPLOY_ENV
-          echo "BUILD_TIMESTAMP=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+    - name: 🏗️ Build Project
+      run: npm run build
 
-      - name: 🔑 Secure SSH Configuration
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.CPANEL_DEPLOY_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/cpanel_key
-          chmod 700 ~/.ssh
-          chmod 600 ~/.ssh/cpanel_key
-          ssh-keyscan -H ${{ secrets.CPANEL_HOST }} >> ~/.ssh/known_hosts
+    - name: 🔐 SSH Setup
+      run: |
+        mkdir -p ~/.ssh
+        # Format key with proper newlines
+        echo "${{ secrets.CPANEL_SSH_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/cpanel_deploy
+        chmod 600 ~/.ssh/cpanel_deploy
+        
+        # Validate key format
+        if ! ssh-keygen -l -f ~/.ssh/cpanel_deploy; then
+          echo "::error::Invalid SSH key format!"
+          exit 1
+        fi
 
-      - name: 📡 Deployment Validation
-        uses: easingthemes/ssh-deploy@v4.3.0
-        env:
-          GIT_TERMINAL_PROMPT: 0
-        with:
-          SSH_PRIVATE_KEY: ${{ secrets.CPANEL_DEPLOY_KEY }}
-          REMOTE_HOST: ${{ secrets.CPANEL_HOST }}
-          REMOTE_USER: ${{ secrets.CPANEL_USER }}
-          REMOTE_PORT: ${{ secrets.CPANEL_PORT || '22' }}
-          SOURCE: 'build/'
-          TARGET: ${{ secrets.CPANEL_DEPLOY_PATH }}
-          ARGS: '-rlgoDzvc --delete --timeout=30 --checksum'
-          SSH_CMD_ARGS: '-o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes'
+    - name: 🔗 Connection Test
+      run: |
+        ssh -T \
+          -o StrictHostKeyChecking=no \
+          -o IdentitiesOnly=yes \
+          -i ~/.ssh/cpanel_deploy \
+          -p ${{ secrets.CPANEL_PORT || '22' }} \
+          ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }} \
+          exit 0
 
-      - name: 🧹 Post-Deployment Cleanup
-        if: always()
-        run: |
-          rm -rf ~/.ssh/cpanel_key
-          echo "🗑️ Temporary credentials cleared"
+    - name: 🚀 Deployment
+      uses: easingthemes/ssh-deploy@v4.0.0
+      with:
+        SSH_PRIVATE_KEY: ${{ secrets.CPANEL_SSH_KEY }}
+        REMOTE_HOST: ${{ secrets.CPANEL_HOST }}
+        REMOTE_USER: ${{ secrets.CPANEL_USER }}
+        REMOTE_PORT: ${{ secrets.CPANEL_PORT || '22' }}
+        SOURCE: 'build/'
+        TARGET: ${{ secrets.CPANEL_DEPLOY_PATH }}
+        ARGS: '-rlgoDzvc --delete --checksum'
+        SSH_CMD_ARGS: '-o ConnectTimeout=15 -i ~/.ssh/cpanel_deploy -o IdentitiesOnly=yes'
+
+    - name: 🧼 Cleanup
+      if: always()
+      run: rm -f ~/.ssh/cpanel_deploy
