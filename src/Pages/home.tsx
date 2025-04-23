@@ -108,7 +108,7 @@ lagos State</span></li>
               <div className="col-lg-6">
                 <ul>
                   {/* <li><i className="bi bi-chevron-right"></i> <strong>Age:</strong> <span>33</span></li> */}
-                  <li><i className="bi bi-chevron-right"></i> <strong>Degree:</strong> <span>Btech & AZ-104: Azure administrators
+                  <li><i className="bi bi-chevron-right"></i> <strong>Degree:</strong> <span>Btech & AZ-104: Azure administrators,
 </span></li>
                   <li><i className="bi bi-chevron-right"></i> <strong>Email:</strong> <span>elisha.officially@gmail.com</span></li>
                   <li><i className="bi bi-chevron-right"></i> <strong>Freelance:</strong> <span>Available</span></li>
