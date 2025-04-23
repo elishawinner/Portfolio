@@ -1,0 +1,97 @@
+/* Hero Section */
+#hero {
+  width: 100%;
+  height: 100vh;
+  background: url("../assets/img/hero-bg.jpg") top center;
+  background-size: cover;
+}
+
+.hero-container {
+  text-align: center;
+  padding: 30px;
+}
+
+/* About Section */
+.about .content h3 {
+  font-weight: 700;
+  font-size: 26px;
+}
+
+.about .content ul {
+  list-style: none;
+  padding: 0;
+}
+
+.about .content ul li {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.about .content ul i {
+  font-size: 16px;
+  margin-right: 5px;
+}
+
+/* Portfolio Section */
+.portfolio .portfolio-item {
+  margin-bottom: 30px;
+}
+
+.portfolio .portfolio-wrap {
+  transition: 0.3s;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.portfolio .portfolio-links {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  transition: 0.3s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.portfolio .portfolio-wrap:hover .portfolio-links {
+  opacity: 1;
+}
+
+/* Services Section */
+.services .icon-box {
+  padding: 30px;
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 0 29px 0 rgba(68, 88, 144, 0.12);
+  transition: all 0.3s ease-in-out;
+}
+
+.services .icon-box:hover {
+  transform: translateY(-5px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  #hero h1 {
+    font-size: 28px;
+    line-height: 36px;
+  }
+  
+  #hero h2 {
+    font-size: 18px;
+    line-height: 24px;
+  }
+}
+
+/* Animations */
+[data-aos] {
+  visibility: hidden;
+}
+
+[data-aos].animate__animated {
+  visibility: visible;
+}
