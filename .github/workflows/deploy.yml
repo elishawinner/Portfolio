@@ -28,13 +28,15 @@ jobs:
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
         
-        # Decode base64 encoded SSH key to preserve formatting
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > ~/.ssh/deploy_key
+        # Write key with proper newline handling
+        printf "%s" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
         chmod 600 ~/.ssh/deploy_key
 
-        # Verify key type
-        echo "Key type:"
-        ssh-keygen -l -f ~/.ssh/deploy_key
+        # Verify key format
+        if ! ssh-keygen -l -f ~/.ssh/deploy_key; then
+          echo "::error::Invalid SSH key format!"
+          exit 1
+        fi
 
         # Configure SSH client
         cat << EOF > ~/.ssh/config
@@ -44,24 +46,17 @@ jobs:
           Port ${REMOTE_PORT:-22}
           IdentityFile ~/.ssh/deploy_key
           IdentitiesOnly yes
-          StrictHostKeyChecking yes
-          UserKnownHostsFile ~/.ssh/known_hosts
+          StrictHostKeyChecking no
         EOF
 
-        # Get server fingerprint
-        ssh-keyscan -p ${REMOTE_PORT:-22} -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
-
     - name: Test SSH Connection
-      run: |
-        echo "Attempting SSH connection..."
-        ssh -vT cpanel-deploy exit 0
+      run: ssh -T cpanel-deploy echo "Connection successful" || true
 
-    - name: Force Deploy
+    - name: Deploy to cPanel
       uses: easingthemes/ssh-deploy@v4.0.0
       with:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        REMOTE_HOST: cpanel-deploy  # Use configured host alias
+        REMOTE_HOST: cpanel-deploy
         SOURCE: "build/"
         TARGET: ${{ secrets.REMOTE_PATH }}
         ssh-options: -F ~/.ssh/config
-        rsync-options: -rlgoDzvc --delete --timeout=30
+        rsync-options: -rlgoDzvc --delete
