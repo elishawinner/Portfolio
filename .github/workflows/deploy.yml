@@ -28,11 +28,20 @@ jobs:
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
         
-        # Write key with proper newline handling
-        printf "%s" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        # Write key with strict formatting controls
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" | sed -e 's/\\n/\n/g' -e 's/\r$//' > ~/.ssh/deploy_key
         chmod 600 ~/.ssh/deploy_key
 
-        # Verify key format
+        # Validate key structure
+        echo "--- Key File Contents ---"
+        head -n 3 ~/.ssh/deploy_key
+        echo "-------------------------"
+        
+        if ! grep -q "BEGIN.*PRIVATE KEY" ~/.ssh/deploy_key; then
+          echo "::error::Missing private key header!"
+          exit 1
+        fi
+
         if ! ssh-keygen -l -f ~/.ssh/deploy_key; then
           echo "::error::Invalid SSH key format!"
           exit 1
