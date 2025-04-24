@@ -28,11 +28,11 @@ jobs:
     - name: 🔑 SSH Key Setup
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/deploy_key
-        chmod 600 ~/.ssh/deploy_key
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/bvc_id_rsa
+        chmod 600 ~/.ssh/bvc_id_rsa
 
     - name: 🚨 Connection Test
-      run: ssh -T -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} exit 0
+      run: ssh -T -o StrictHostKeyChecking=no -i ~/.ssh/bvc_id_rsa ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} exit 0
 
     - name: 🚀 Deploy to cPanel
       uses: easingthemes/ssh-deploy@v4.0.0
@@ -44,8 +44,8 @@ jobs:
         SOURCE: "build/"
         TARGET: ${{ secrets.REMOTE_PATH }}
         ARGS: '-rlgoDzvc --checksum --delete'
-        SSH_CMD_ARGS: '-o ConnectTimeout=15 -i ~/.ssh/deploy_key -o IdentitiesOnly=yes'
+        SSH_CMD_ARGS: '-o ConnectTimeout=15 -i ~/.ssh/bvc_id_rsa -o IdentitiesOnly=yes'
 
     - name: 🧼 Security Cleanup
       if: always()
-      run: rm -f ~/.ssh/deploy_key
+      run: rm -f ~/.ssh/bvc_id_rsa
