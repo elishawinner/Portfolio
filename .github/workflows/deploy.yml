@@ -28,11 +28,11 @@ jobs:
     - name: 🔑 SSH Key Setup
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/SSH_PRIVATE_KEY
-        chmod 600 ~/.ssh/SSH_PRIVATE_KEY
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
 
     - name: 🚨 Connection Test
-      run: ssh -T -o StrictHostKeyChecking=no -i ~/.ssh/SSH_PRIVATE_KEY ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} exit 0
+      run: ssh -T -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} exit 0
 
     - name: 🚀 Deploy to cPanel
       uses: easingthemes/ssh-deploy@v4.0.0
@@ -44,8 +44,8 @@ jobs:
         SOURCE: "build/"
         TARGET: ${{ secrets.REMOTE_PATH }}
         ARGS: '-rlgoDzvc --checksum --delete'
-        SSH_CMD_ARGS: '-o ConnectTimeout=15 -i ~/.ssh/SSH_PRIVATE_KEY -o IdentitiesOnly=yes'
+        SSH_CMD_ARGS: '-o ConnectTimeout=15 -i ~/.ssh/deploy_key -o IdentitiesOnly=yes'
 
     - name: 🧼 Security Cleanup
       if: always()
-      run: rm -f ~/.ssh/SSH_PRIVATE_KEY
+      run: rm -f ~/.ssh/deploy_key
