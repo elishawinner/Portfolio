@@ -28,24 +28,24 @@ jobs:
     - name: 🔑 SSH Key Setup
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/bvc_id_rsa
-        chmod 600 ~/.ssh/bvc_id_rsa
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/SSH_PRIVATE_KEY
+        chmod 600 ~/.ssh/SSH_PRIVATE_KEY
 
     - name: 🚨 Connection Test
-      run: ssh -T -o StrictHostKeyChecking=no -i ~/.ssh/bvc_id_rsa ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} exit 0
+      run: ssh -T -o StrictHostKeyChecking=no -i ~/.ssh/SSH_PRIVATE_KEY ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} exit 0
 
     - name: 🚀 Deploy to cPanel
       uses: easingthemes/ssh-deploy@v4.0.0
       with:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+        REMOTE_HOST: ${{ secrets.REMOTE_HOST }
         REMOTE_USER: ${{ secrets.REMOTE_USER }}
         REMOTE_PORT: ${{ secrets.REMOTE_PORT || '22' }}
         SOURCE: "build/"
         TARGET: ${{ secrets.REMOTE_PATH }}
         ARGS: '-rlgoDzvc --checksum --delete'
-        SSH_CMD_ARGS: '-o ConnectTimeout=15 -i ~/.ssh/bvc_id_rsa -o IdentitiesOnly=yes'
+        SSH_CMD_ARGS: '-o ConnectTimeout=15 -i ~/.ssh/SSH_PRIVATE_KEY -o IdentitiesOnly=yes'
 
     - name: 🧼 Security Cleanup
       if: always()
-      run: rm -f ~/.ssh/bvc_id_rsa
+      run: rm -f ~/.ssh/SSH_PRIVATE_KEY
