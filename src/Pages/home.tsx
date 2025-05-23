@@ -85,7 +85,7 @@ const Home: React.FC = () => {
           <div className="container">
             <div className="section-title">
               <h2>Portfolio</h2>
-              <p>Diligent software engineer with 8+ years experience...</p>
+              <p>Diligent software engineer with 9+ years experience...</p>
             </div>
             <div className="row portfolio-container" data-aos="fade-up" data-aos-delay="100">
               {portfolioItems.map((item) => (
